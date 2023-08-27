@@ -1,0 +1,79 @@
+[NEAT] # -> The Configuration File with all variables and parameters are defined
+fitness_criterion     = max #-> This is to determine the best birds to select [ Select the birds with highest fitness]
+fitness_threshold     = 100 #-> Number we need to reach before we terminate the program
+pop_size              = 20 #-> The number of birds we want in the experiment 
+reset_on_extinction   = False #-> Separates the kind of population into species, and creates random species if they get extinct
+
+[DefaultGenome] #-> All of population members (birds) genome, nodes= neurons and genes = connections,  
+# node activation options
+activation_default      = tanh #-> Activation function
+activation_mutate_rate  = 0.0 #-> to change it randomly 
+activation_options      = tanh #-> options for having different activation functions
+
+# node aggregation options #-> how to process the connections and weights
+aggregation_default     = sum
+aggregation_mutate_rate = 0.0
+aggregation_options     = sum
+
+# node bias options #-> parameters for how likely the bias changes 
+bias_init_mean          = 0.0
+bias_init_stdev         = 1.0
+bias_max_value          = 30.0
+bias_min_value          = -30.0
+bias_mutate_power       = 0.5
+bias_mutate_rate        = 0.7
+bias_replace_rate       = 0.1
+
+# genome compatibility options  #-> adjustable parameters that control how genetic differences between neural network genomes are evaluated when calculating their similarity or genetic distance
+compatibility_disjoint_coefficient = 1.0 #-> influence of differences in disjoint and excess genes on the genetic distance calculation.
+compatibility_weight_coefficient   = 0.5 #-> differences in weights, biases, and other attributes on the genetic distance calculation
+
+# connection add/remove rates #-> for adding or removing a new connection
+conn_add_prob           = 0.5
+conn_delete_prob        = 0.5
+
+# connection enable options #-> connections will have active or deactivated parameters
+enabled_default         = True
+enabled_mutate_rate     = 0.01
+
+feed_forward            = True #-> feed forward neural network
+initial_connection      = full #-> fully connected layers to start
+
+# node add/remove rates #-> node[Neurons] add or delete probability
+node_add_prob           = 0.2
+node_delete_prob        = 0.2
+
+# network parameters #-> Setting the layer parameters, we have no hidden layer, since the logic is pretty straightforward
+num_hidden              = 0
+num_inputs              = 3
+num_outputs             = 1
+
+# node response options #-> parameters for how likely the node response changes  
+response_init_mean      = 1.0
+response_init_stdev     = 0.0
+response_max_value      = 30.0
+response_min_value      = -30.0
+response_mutate_power   = 0.0
+response_mutate_rate    = 0.0
+response_replace_rate   = 0.0
+
+# connection weight options #-> parameters for how likely the weight changes 
+weight_init_mean        = 0.0
+weight_init_stdev       = 1.0
+weight_max_value        = 30
+weight_min_value        = -30
+weight_mutate_power     = 0.5
+weight_mutate_rate      = 0.8
+weight_replace_rate     = 0.1
+
+[DefaultSpeciesSet] 
+compatibility_threshold = 3.0
+
+[DefaultStagnation] 
+species_fitness_func = max #-> This setting specifies the function used to compute the fitness of a species.
+max_stagnation       = 20 #-> how many generations we go without increasing fitness
+species_elitism      = 2 #-> This parameter controls how many of the best-performing individuals from each species are preserved as elite individuals
+
+[DefaultReproduction]
+elitism            = 2 #-> This setting determines how many individuals are considered as elite individuals and preserved unchanged in the next generation.
+survival_threshold = 0.2 #-> This parameter sets a survival threshold for the proportion of individuals within a species.

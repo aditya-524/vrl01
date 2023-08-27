@@ -164,8 +164,11 @@ def draw_window(win, bird, pipes, base, score): # Draw the window
     bird.draw(win) # Draw the bird
     pygame.display.update() # Update the display, refreshes it 
 
-def main(): # Main function
-    bird = Bird(230,350) # Create a bird object
+def main(genomes, config): # Main function
+    nets = [] # List of neural networks
+    ge = [] # List of genomes
+
+    birds = [] # List of birds]
     base = Base(730) # Create a base object
     pipes = [Pipe(600)] # Create a pipe object
     score = 0 # Starting score
@@ -179,32 +182,34 @@ def main(): # Main function
             if event.type == pygame.QUIT: # If we quit
                 run = False # Stop running
         # bird.move() # Move the bird
-        rem = [] # List of pipes to remove
+
         add_pipe = False # Add a pipe
+        rem = [] # List of pipes to remove
         for pipe in pipes: # For each pipe
-            if pipe.collide(bird): # If the bird collides with the pipe
-                pass # Do nothing
+            for bird in birds: # For each bird
+                if pipe.collide(bird): # If the bird collides with the pipe
+                    pass # Do nothing
+                        
+                if not pipe.passed and pipe.x < bird.x: # If the bird has passed the pipe
+                    pipe.passed = True # Set passed to true
+                    add_pipe = True # Add a pipe
+
             if pipe.x + pipe.PIPE_TOP.get_width() < 0: # If the pipe is off the screen
                 rem.append(pipe) # Add the pipe to the list of pipes to remove
-                pipes.remove(pipe) # Remove the pipe
             
-            if not pipe.passed and pipe.x < bird.x: # If the bird has passed the pipe
-                pipe.passed = True # Set passed to true
-                pipes.append(Pipe(600)) # Add a new pipe
-                add_pipe = True # Add a pipe
-
             pipe.move() # Move the pipe
 
         if add_pipe:
             score += 1
             pipes.append(Pipe(600))
-            add_pipe = False
+
         
         for r in rem:
             pipes.remove(r)
 
-        if bird.y + bird.img.get_height() >= 730: # If the bird hits the ground
-            pass
+        for bird in birds: # For each bird
+            if bird.y + bird.img.get_height() >= 730: # If the bird hits the ground
+                pass
 
         base.move() # Move the base
         draw_window(win, bird, pipes, base, score) # Draw the window
@@ -212,6 +217,22 @@ def main(): # Main function
     quit() # Quit the program
 
 main() # Run the main function
+
+def run():
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
+                                neat.DefaultSpeciesSet, neat.DefaultStagnation, 
+                                config_path) # Get the config file
+    p = neat.Population(config) # Create a population
+    p.add_reporter(neat.StdOutReporter(True)) # Add a reporter, optional to give out output in the console #TODO check for visual 
+    stats = neat.StatisticsReporter() # Create a statistics reporter
+    p.add_reporter(stats) # Add the statistics reporter
+
+    winner = p.run(main, 50) # Run the main function 50 times, return the winner
+
+if __name__ == "__main__":
+    local_dir = os.path.dirname(__file__) # Get the directory of the current file
+    config_path = os.path.join(local_dir, "config-feedforward.txt") # Get the path to the config file
+    run(config_path) # Run the config file
 
 
 
