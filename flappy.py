@@ -5,7 +5,7 @@ import os
 import random
 pygame.font.init() # Initialize pygame font
 
-WIN_WIDTH = 500 # Window width
+WIN_WIDTH = 600 # Window width
 WIN_HEIGHT = 800 # Window height
 
 # Load images for sprites
@@ -15,8 +15,6 @@ BASE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "base
 BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bg.png")))
 STAT_FONT = pygame.font.SysFont("comicsans", 50) # Font for the score
 
-
-#TODO Define Classes for different objects
 
 class Bird:
     IMGS = BIRD_IMGS # Images for bird
@@ -150,7 +148,7 @@ class Base: # Base class
     
 
 
-def draw_window(win, bird, pipes, base, score): # Draw the window
+def draw_window(win, birds, pipes, base, score): # Draw the window
     win.blit(BG_IMG, (0,0)) # Draw the background
 
     for pipe in pipes: # For each pipe
@@ -161,64 +159,98 @@ def draw_window(win, bird, pipes, base, score): # Draw the window
 
 
     base.draw(win) # Draw the base
-    bird.draw(win) # Draw the bird
+    for bird in birds:
+        bird.draw(win) # Draw the bird
+
     pygame.display.update() # Update the display, refreshes it 
 
 def main(genomes, config): # Main function
     nets = [] # List of neural networks
     ge = [] # List of genomes
-
     birds = [] # List of birds]
+    
+    for _, g in genomes: # For each genome
+        g.fitness = 0 # Set the fitness to 0
+        net = neat.nn.FeedForwardNetwork.create(g, config) # Create a neural network
+        nets.append(net) # Add the neural network to the list of neural networks
+        birds.append(Bird(230,350)) # Add a bird
+        ge.append(g) # Add the genome to the list of genomes
+
     base = Base(730) # Create a base object
-    pipes = [Pipe(600)] # Create a pipe object
+    pipes = [Pipe(700)] # Create a pipe object
     score = 0 # Starting score
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT)) # Create a window
     clock = pygame.time.Clock() # Create a clock
     
     run = True # Run the game
-    while run: # While we are running
+    while run and len(birds) > 0: # While we are running
         clock.tick(30) # Tick the clock 30 times per second
+
         for event in pygame.event.get(): # Get all events
             if event.type == pygame.QUIT: # If we quit
-                run = False # Stop running
-        # bird.move() # Move the bird
+                run = False
+                pygame.quit()
+                quit()
+                break
 
-        add_pipe = False # Add a pipe
+        pipe_ind = 0 # Index of the pipe
+        if len(birds) > 0: # If there are birds
+            if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width(): # If the bird has passed the first pipe
+                pipe_ind = 1 # Set the pipe index to 1
+        else: # If there are no birds #TODO check if this is irrelevant, i think it is cause we aare checcking in line 186 for 0 birds
+            run = False # Stop running
+            break            
+
+        for x, bird in enumerate(birds): # For each bird
+            ge[x].fitness += 0.1 # Increase the fitness of the bird
+            bird.move() # Move the bird
+            output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
+            if output[0] > 0.5: # If the output is greater than 0.5
+                bird.jump() # Make the bird jump
+
+        base.move() # Move the base
+
         rem = [] # List of pipes to remove
+        add_pipe = False # Add a pipe
+        
         for pipe in pipes: # For each pipe
-            for bird in birds: # For each bird
+            pipe.move() # Move the pipe
+            for x, bird in enumerate(birds): # For each bird
                 if pipe.collide(bird): # If the bird collides with the pipe
-                    pass # Do nothing
+                    ge[x].fitness -= 1 # Decrease the fitness of the bird
+                    birds.pop(x) # Remove the bird
+                    nets.pop(x) # Remove the neural network
+                    ge.pop(x) # Remove the genome
                         
-                if not pipe.passed and pipe.x < bird.x: # If the bird has passed the pipe
-                    pipe.passed = True # Set passed to true
-                    add_pipe = True # Add a pipe
+            if not pipe.passed and pipe.x < bird.x: # If the bird has passed the pipe
+                pipe.passed = True # Set passed to true
+                add_pipe = True # Add a pipe
 
             if pipe.x + pipe.PIPE_TOP.get_width() < 0: # If the pipe is off the screen
                 rem.append(pipe) # Add the pipe to the list of pipes to remove
-            
-            pipe.move() # Move the pipe
 
         if add_pipe:
             score += 1
-            pipes.append(Pipe(600))
+            for g in ge: # For each genome
+                g.fitness += 5 # Increase the fitness of the bird
+
+            pipes.append(Pipe(WIN_WIDTH)) # Add a pipe
 
         
         for r in rem:
             pipes.remove(r)
 
-        for bird in birds: # For each bird
-            if bird.y + bird.img.get_height() >= 730: # If the bird hits the ground
-                pass
+        for x, bird in enumerate(birds): # For each bird
+            if bird.y + bird.img.get_height() >= 730 or bird.y < 0: # If the bird hits the ground
+                birds.pop(x) # Remove the bird
+                nets.pop(x) # Remove the neural network
+                ge.pop(x) # Remove the genome
 
-        base.move() # Move the base
-        draw_window(win, bird, pipes, base, score) # Draw the window
-    pygame.quit() # Quit pygame
-    quit() # Quit the program
+        draw_window(win, birds, pipes, base, score) # Draw the window
 
-main() # Run the main function
 
-def run():
+
+def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation, 
                                 config_path) # Get the config file
@@ -228,7 +260,9 @@ def run():
     p.add_reporter(stats) # Add the statistics reporter
 
     winner = p.run(main, 50) # Run the main function 50 times, return the winner
-
+    # show final stats
+    print('\nBest genome:\n{!s}'.format(winner)) # Print the best genome
+    
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__) # Get the directory of the current file
     config_path = os.path.join(local_dir, "config-feedforward.txt") # Get the path to the config file
