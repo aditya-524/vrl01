@@ -5,8 +5,10 @@ import os
 import random
 pygame.font.init() # Initialize pygame font
 
-WIN_WIDTH = 600 # Window width
+WIN_WIDTH = 500 # Window width
 WIN_HEIGHT = 800 # Window height
+
+GEN = 0 # Generation
 
 # Load images for sprites
 BIRD_IMGS = [pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird1.png"))), pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird2.png"))), pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird3.png")))]
@@ -148,7 +150,7 @@ class Base: # Base class
     
 
 
-def draw_window(win, birds, pipes, base, score): # Draw the window
+def draw_window(win, birds, pipes, base, score, gen): # Draw the window
     win.blit(BG_IMG, (0,0)) # Draw the background
 
     for pipe in pipes: # For each pipe
@@ -157,6 +159,8 @@ def draw_window(win, birds, pipes, base, score): # Draw the window
     text = STAT_FONT.render("Score: " + str(score), 1, (255,255,255)) # Create the score text
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10)) # Draw the score text
 
+    text = STAT_FONT.render("Gen: " + str(gen), 1, (255,255,255)) # Create the generation text
+    win.blit(text, (10, 10)) # Draw the generation text
 
     base.draw(win) # Draw the base
     for bird in birds:
@@ -165,6 +169,8 @@ def draw_window(win, birds, pipes, base, score): # Draw the window
     pygame.display.update() # Update the display, refreshes it 
 
 def main(genomes, config): # Main function
+    global GEN # Global generation
+    GEN += 1 # Increment generation
     nets = [] # List of neural networks
     ge = [] # List of genomes
     birds = [] # List of birds]
@@ -246,7 +252,7 @@ def main(genomes, config): # Main function
                 nets.pop(x) # Remove the neural network
                 ge.pop(x) # Remove the genome
 
-        draw_window(win, birds, pipes, base, score) # Draw the window
+        draw_window(win, birds, pipes, base, score, GEN) # Draw the window
 
 
 
