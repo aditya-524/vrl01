@@ -3,6 +3,8 @@ import neat
 import time
 import os
 import random
+import graphviz #To visuliaze the neural network
+import visualize #To visuliaze the neural network
 pygame.font.init() # Initialize pygame font
 
 WIN_WIDTH = 500 # Window width
@@ -251,11 +253,31 @@ def main(genomes, config): # Main function
                 birds.pop(x) # Remove the bird
                 nets.pop(x) # Remove the neural network
                 ge.pop(x) # Remove the genome
-
+        
         draw_window(win, birds, pipes, base, score, GEN) # Draw the window
+        visualize.draw_net(config, g, filename=f'neural_net_{GEN}.png')
 
+def draw_net(config, genome, filename):
+    """ Receives a genome and draws a neural network with arbitrary topology. """
+    # Create a PyDot graph object
+    dot = graphviz.Digraph(comment='Neural Network')
 
+    # Add nodes for each neuron in the genome
+    for node in genome.nodes:
+        if node.type == 'INPUT':
+            dot.node(str(node.id), shape='circle', style='filled', fillcolor='lightblue')
+        elif node.type == 'OUTPUT':
+            dot.node(str(node.id), shape='doublecircle', style='filled', fillcolor='lightblue')
+        else:
+            dot.node(str(node.id), shape='circle')
 
+    # Add edges for each connection in the genome
+    for conn in genome.connections.values():
+        if conn.enabled:
+            dot.edge(str(conn.in_node), str(conn.out_node), label=str(round(conn.weight, 2)))
+
+    # Save the graph to a file
+    dot.render(filename, format='png')
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation, 
